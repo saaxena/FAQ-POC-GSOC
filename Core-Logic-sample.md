@@ -1,28 +1,35 @@
-// This is a simplified sample of the core matching algorithm
-// You can safely share this without revealing your full codebase
-
 /**
  * FAQ Assistant - Core question matching and response flow
  * A sample implementation showing the key concepts
  */
 
-// Sample FAQ database
+// Sample FAQ database with structured entries
 const faqDatabase = [
   {
     id: "setup-dev",
     question: "How do I set up the development environment?",
-    answer: "To set up the development environment: 1) Clone the repo 2) Install dependencies 3) Configure environment variables 4) Run the dev server",
+    answer: "To set up the development environment: \n" +
+            "1) Clone the repo \n" +
+            "2) Install dependencies \n" +
+            "3) Configure environment variables \n" +
+            "4) Run the dev server",
     keywords: ["setup", "environment", "development", "install"]
   },
   {
     id: "pr-workflow",
     question: "How do I submit a pull request?",
-    answer: "To submit a PR: 1) Fork the repo 2) Clone your fork 3) Create a branch 4) Make changes 5) Push to your fork 6) Open a PR from the main repo",
+    answer: "To submit a PR: \n" +
+            "1) Fork the repo \n" +
+            "2) Clone your fork \n" +
+            "3) Create a branch \n" +
+            "4) Make changes \n" +
+            "5) Push to your fork \n" +
+            "6) Open a PR from the main repo",
     keywords: ["PR", "pull request", "contribute", "fork", "branch"]
   }
 ];
 
-// Configuration
+// System configuration options
 const config = {
   matchThreshold: 0.85,
   actionType: "DM_WITH_APPROVAL", // Options: DIRECT_ANSWER, DM_WITH_APPROVAL, NOTIFY_ONLY
@@ -31,11 +38,15 @@ const config = {
 
 /**
  * Main function to process an incoming question
+ * 
+ * @param {string} question - The user's question text
+ * @param {Object} context - Contextual information about where/who asked
+ * @returns {Object|null} - The answer object or null if no match found
  */
 async function processQuestion(question, context) {
   console.log(`Processing question: "${question}"`);
   
-  // 1. Match question to FAQ
+  // Step 1: Match question to FAQ database
   const match = await matchQuestionToFAQ(question, faqDatabase, config.matchThreshold);
   
   if (!match.isMatch) {
@@ -45,11 +56,11 @@ async function processQuestion(question, context) {
   
   console.log(`Matched FAQ: ${match.matchedFaqId} (confidence: ${match.confidence})`);
   
-  // 2. Generate personalized answer
+  // Step 2: Generate personalized answer for the user
   const matchedFAQ = faqDatabase.find(faq => faq.id === match.matchedFaqId);
   const answer = await generatePersonalizedAnswer(question, matchedFAQ, context);
   
-  // 3. Take the appropriate action based on configuration
+  // Step 3: Take the appropriate action based on configuration
   await handleAction(config.actionType, answer, context, config);
   
   return answer;
@@ -57,7 +68,11 @@ async function processQuestion(question, context) {
 
 /**
  * Match a question to the FAQ database
- * In a real implementation, this would use an LLM or semantic matching
+ * 
+ * @param {string} question - The normalized user question
+ * @param {Array} faqs - The FAQ database to search
+ * @param {number} threshold - Minimum confidence threshold
+ * @returns {Object} - Match results with confidence score
  */
 async function matchQuestionToFAQ(question, faqs, threshold) {
   // Simplified matching logic for demonstration
@@ -81,13 +96,18 @@ async function matchQuestionToFAQ(question, faqs, threshold) {
     isMatch: bestMatch !== null,
     matchedFaqId: bestMatch,
     confidence: bestScore,
-    reasoning: bestMatch ? "Matched based on keywords and question similarity" : "No good match found"
+    reasoning: bestMatch 
+      ? "Matched based on keywords and question similarity" 
+      : "No good match found"
   };
 }
 
 /**
- * Simple function to demonstrate matching logic
- * Real implementation would be much more sophisticated
+ * Calculate match score between question and FAQ entry
+ * 
+ * @param {string} question - Normalized user question
+ * @param {Object} faq - FAQ entry to compare against
+ * @returns {number} - Match score between 0-1
  */
 function calculateMatchScore(question, faq) {
   let score = 0;
@@ -107,20 +127,29 @@ function calculateMatchScore(question, faq) {
     score += 0.5;
   }
   
-  return Math.min(score, 1.0); // Cap at 1.0
+  // Cap score at 1.0
+  return Math.min(score, 1.0);
 }
 
 /**
  * Generate a personalized answer based on the matched FAQ
- * In a real implementation, this would use an LLM to tailor the response
+ * 
+ * @param {string} question - Original user question
+ * @param {Object} matchedFAQ - The matched FAQ entry
+ * @param {Object} context - User and environment context
+ * @returns {Object} - Formatted answer object
  */
 async function generatePersonalizedAnswer(question, matchedFAQ, context) {
   // In a real implementation, this would use an LLM to generate a personalized response
-  // This is a simplified version for demonstration
   
-  const personalization = `Hi @${context.questionerId}! Here's how you can ${matchedFAQ.question.toLowerCase().replace("how do i ", "")}:`;
+  // Create personalized greeting and topic introduction
+  const actionPhrase = matchedFAQ.question.toLowerCase().replace("how do i ", "");
+  const personalization = `Hi @${context.questionerId}! Here's how you can ${actionPhrase}:`;
+  
+  // Combine personalized intro with answer content
   const answer = `${personalization}\n\n${matchedFAQ.answer}`;
   
+  // Return structured answer object with metadata
   return {
     id: `answer-${Date.now()}`,
     originalQuestion: question,
@@ -133,6 +162,11 @@ async function generatePersonalizedAnswer(question, matchedFAQ, context) {
 
 /**
  * Handle the appropriate action based on configuration
+ * 
+ * @param {string} actionType - Type of action to take
+ * @param {Object} answerData - The generated answer data
+ * @param {Object} context - User and environment context
+ * @param {Object} config - System configuration
  */
 async function handleAction(actionType, answerData, context, config) {
   console.log(`Handling action: ${actionType}`);
