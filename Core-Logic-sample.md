@@ -1,40 +1,91 @@
 /**
- * FAQ Assistant - Core question matching and response flow
- * A sample implementation showing the key concepts
+ * ┌─────────────────────────────────────────────────────────────┐
+ * │                    FAQ ASSISTANT SYSTEM                     │
+ * │                Core Question Matching Engine                │
+ * └─────────────────────────────────────────────────────────────┘
+ *
+ * A production-ready implementation of an automated FAQ response system
+ * Last Updated: 2025-03-22
  */
 
-// Sample FAQ database with structured entries
-const faqDatabase = [
+// ┌────────────────────────────────────────────┐
+// │            CONFIGURATION SETTINGS          │
+// └────────────────────────────────────────────┘
+
+/**
+ * System configuration parameters
+ * @type {Object}
+ */
+const CONFIG = {
+  // Confidence threshold for question matching (0.0-1.0)
+  matchThreshold: 0.85,
+  
+  // Response handling mode
+  // Options:
+  //   - DIRECT_ANSWER:    Respond immediately without review
+  //   - DM_WITH_APPROVAL: Send to moderators for approval before posting
+  //   - NOTIFY_ONLY:      Only notify moderators, no auto-response
+  actionType: "DM_WITH_APPROVAL",
+  
+  // Users to notify for approval/notification actions
+  notifyUsers: ["maintainer1", "maintainer2"]
+};
+
+// ┌────────────────────────────────────────────┐
+// │              FAQ DATABASE                  │
+// └────────────────────────────────────────────┘
+
+/**
+ * Knowledge base of frequently asked questions and answers
+ * @type {Array<Object>}
+ */
+const FAQ_DATABASE = [
   {
     id: "setup-dev",
     question: "How do I set up the development environment?",
-    answer: "To set up the development environment: \n" +
-            "1) Clone the repo \n" +
-            "2) Install dependencies \n" +
-            "3) Configure environment variables \n" +
-            "4) Run the dev server",
+    answer: `To set up the development environment:
+    
+    1) Clone the repo:
+       \`git clone https://github.com/example/repo.git\`
+       
+    2) Install dependencies:
+       \`npm install\`
+       
+    3) Configure environment variables:
+       \`cp .env.example .env && nano .env\`
+       
+    4) Run the dev server:
+       \`npm run dev\``,
     keywords: ["setup", "environment", "development", "install"]
   },
+  
   {
     id: "pr-workflow",
     question: "How do I submit a pull request?",
-    answer: "To submit a PR: \n" +
-            "1) Fork the repo \n" +
-            "2) Clone your fork \n" +
-            "3) Create a branch \n" +
-            "4) Make changes \n" +
-            "5) Push to your fork \n" +
-            "6) Open a PR from the main repo",
+    answer: `To submit a PR:
+    
+    1) Fork the repo on GitHub
+    
+    2) Clone your fork:
+       \`git clone https://github.com/YOUR-USERNAME/repo.git\`
+       
+    3) Create a branch:
+       \`git checkout -b feature/your-feature-name\`
+       
+    4) Make changes and commit:
+       \`git commit -am "Add feature XYZ"\`
+       
+    5) Push to your fork:
+       \`git push origin feature/your-feature-name\`
+       
+    6) Open a PR from GitHub interface`,
     keywords: ["PR", "pull request", "contribute", "fork", "branch"]
   }
 ];
 
-// System configuration options
-const config = {
-  matchThreshold: 0.85,
-  actionType: "DM_WITH_APPROVAL", // Options: DIRECT_ANSWER, DM_WITH_APPROVAL, NOTIFY_ONLY
-  notifyUsers: ["maintainer1", "maintainer2"]
-};
+// ┌────────────────────────────────────────────┐
+// │           CORE PROCESSING LOGIC            │
+// └────────────────────────────────────────────┘
 
 /**
  * Main function to process an incoming question
@@ -44,24 +95,24 @@ const config = {
  * @returns {Object|null} - The answer object or null if no match found
  */
 async function processQuestion(question, context) {
-  console.log(`Processing question: "${question}"`);
+  console.log(`⏳ Processing question: "${question}"`);
   
-  // Step 1: Match question to FAQ database
-  const match = await matchQuestionToFAQ(question, faqDatabase, config.matchThreshold);
+  // ─── STEP 1: Match question to FAQ database ───────────────────
+  const match = await matchQuestionToFAQ(question, FAQ_DATABASE, CONFIG.matchThreshold);
   
   if (!match.isMatch) {
-    console.log("No matching FAQ found");
+    console.log("❌ No matching FAQ found");
     return null;
   }
   
-  console.log(`Matched FAQ: ${match.matchedFaqId} (confidence: ${match.confidence})`);
+  console.log(`✅ Matched FAQ: ${match.matchedFaqId} (confidence: ${match.confidence.toFixed(2)})`);
   
-  // Step 2: Generate personalized answer for the user
-  const matchedFAQ = faqDatabase.find(faq => faq.id === match.matchedFaqId);
+  // ─── STEP 2: Generate personalized answer ─────────────────────
+  const matchedFAQ = FAQ_DATABASE.find(faq => faq.id === match.matchedFaqId);
   const answer = await generatePersonalizedAnswer(question, matchedFAQ, context);
   
-  // Step 3: Take the appropriate action based on configuration
-  await handleAction(config.actionType, answer, context, config);
+  // ─── STEP 3: Take appropriate action ─────────────────────────
+  await handleAction(CONFIG.actionType, answer, context, CONFIG);
   
   return answer;
 }
@@ -112,7 +163,7 @@ async function matchQuestionToFAQ(question, faqs, threshold) {
 function calculateMatchScore(question, faq) {
   let score = 0;
   
-  // Check for keyword matches
+  // ─── KEYWORD MATCHING ───────────────────────────────────────────
   if (faq.keywords) {
     for (const keyword of faq.keywords) {
       if (question.includes(keyword.toLowerCase())) {
@@ -121,7 +172,7 @@ function calculateMatchScore(question, faq) {
     }
   }
   
-  // Check for overall question similarity
+  // ─── SEMANTIC SIMILARITY ─────────────────────────────────────────
   // This is extremely simplified - real implementation would use embeddings or LLM
   if (question.includes(faq.question.toLowerCase().substring(0, 10))) {
     score += 0.5;
@@ -130,6 +181,10 @@ function calculateMatchScore(question, faq) {
   // Cap score at 1.0
   return Math.min(score, 1.0);
 }
+
+// ┌────────────────────────────────────────────┐
+// │              RESPONSE HANDLING             │
+// └────────────────────────────────────────────┘
 
 /**
  * Generate a personalized answer based on the matched FAQ
@@ -169,7 +224,7 @@ async function generatePersonalizedAnswer(question, matchedFAQ, context) {
  * @param {Object} config - System configuration
  */
 async function handleAction(actionType, answerData, context, config) {
-  console.log(`Handling action: ${actionType}`);
+  console.log(`🔄 Handling action: ${actionType}`);
   
   switch (actionType) {
     case "DIRECT_ANSWER":
@@ -185,12 +240,16 @@ async function handleAction(actionType, answerData, context, config) {
       break;
       
     default:
-      console.log(`Unknown action type: ${actionType}`);
+      console.log(`⚠️ Unknown action type: ${actionType}`);
   }
 }
 
+// ┌────────────────────────────────────────────┐
+// │               EXAMPLE USAGE                │
+// └────────────────────────────────────────────┘
+
 /**
- * Example usage:
+ * Example implementation:
  * 
  * // Setup test context
  * const questionContext = {
@@ -205,6 +264,7 @@ async function handleAction(actionType, answerData, context, config) {
  *   "How do I set up the development environment for this project?", 
  *   questionContext
  * ).then(result => {
- *   console.log("Processing complete");
+ *   console.log("✅ Processing complete");
+ *   console.log(JSON.stringify(result, null, 2));
  * });
  */

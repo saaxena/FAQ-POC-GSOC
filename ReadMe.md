@@ -4,7 +4,7 @@
 
 This document provides instructions for testing the FAQ Assistant as part of the GSOC project proof of concept. The system consists of webhook endpoints that process questions from GitHub and Rocket.Chat, matching them against an FAQ database and responding according to configured workflows.
 
-## Test Endpoints
+## Test Endpoints  (USE POSTMAN FOR TESTING EXPOSED ENDPOINTS )
 
 
 ### Health Check Endpoint
