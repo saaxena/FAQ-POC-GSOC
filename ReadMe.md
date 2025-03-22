@@ -16,10 +16,10 @@ Method: GET
 URL: https://faq-detect.onrender.com/health
 This should return a simple status response to confirm the service is running.
 
-### Test a GitHub Question
+### Test a GitHub Question  (Stimulates Github)
 
 ```
-URL - https://faq-detect.onrender.com/test/webhook/github
+URL - https://faq-detect.onrender.com/test/webhook/github  
 Content-Type: application/json
 ```
 
@@ -57,7 +57,7 @@ Content-Type: application/json
 }
 ```
 
-### Test a Rocket.Chat Question
+### Test a Rocket.Chat Question (Stimulates Rocket Chat)
 
 ```
 URL - https://faq-detect.onrender.com/test/webhook/rocketchat
@@ -90,7 +90,7 @@ Content-Type: application/json
 }
 ```
 
-### Test the Approval Workflow
+### Test the Approval Workflow 
 
 ```
 URL: https://faq-detect.onrender.com/test/approval
