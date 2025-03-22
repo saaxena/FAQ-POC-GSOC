@@ -7,7 +7,6 @@ This document provides instructions for testing the FAQ Assistant as part of the
 ## Test Endpoints  (USE POSTMAN FOR TESTING EXPOSED ENDPOINTS )
 ""Please wait for 1 or 2 minutes after sending first request as my Service is using "RENDER-FREE-TIER" Plan 
 Render Automatically Spun down after 15 Minutes of Inactivity So Be Patient.""
-Thanks,  Please leave your feedback!!
 
 
 
