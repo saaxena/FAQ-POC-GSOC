@@ -1,170 +1,120 @@
-# FAQ Assistant API Documentation
+# FAQ Assistant - Open Source Community Helper
 
-## Overview  (Please Go Through "Project-Overview.md" For Better Clarity )
+## Project Overview
 
-This document provides instructions for testing the FAQ Assistant as part of the GSOC project proof of concept. The system consists of webhook endpoints that process questions from GitHub and Rocket.Chat, matching them against an FAQ database and responding according to configured workflows.
+The FAQ Assistant is an intelligent bot that monitors GitHub issues and chat platforms to automatically answer common questions by matching them with a curated FAQ database. This reduces maintainer workload and improves response times for contributors.
 
-## Test Endpoints  (USE POSTMAN FOR TESTING EXPOSED ENDPOINTS )
-""Please wait for 1 or 2 minutes after sending first request as my Service is using "RENDER-FREE-TIER" Plan 
-Render Automatically Spun down after 15 Minutes of Inactivity So Be Patient.""
+## Key Features
 
+- **Multi-platform Support**: Works with both GitHub and Rocket.Chat
+- **Smart Question Matching**: Uses AI to understand intent behind questions
+- **Configurable Workflows**: Multiple response modes (direct answer, maintainer approval, notification)
+- **Personalized Responses**: Tailors answers to specific questions rather than generic templates
+- **Maintainer Oversight**: Approval system to ensure accuracy before posting
 
-
-### Health Check Endpoint
-
-Method: GET
-URL: https://faq-detect.onrender.com/health
-This should return a simple status response to confirm the service is running.
-
-### Test a GitHub Question  (Stimulates Github)
+## Architecture
 
 ```
-URL - https://faq-detect.onrender.com/test/webhook/github  
-Content-Type: application/json
+┌───────────────┐     ┌─────────────────┐     ┌────────────────┐
+│   Platforms   │     │  FAQ Assistant  │     │ AI Integration │
+│ (GitHub/Chat) │────▶│   Core System   │────▶│   (Gemini AI)  │
+└───────────────┘     └─────────────────┘     └────────────────┘
+                              │
+                              ▼
+┌───────────────┐     ┌─────────────────┐     ┌────────────────┐
+│ Configuration │     │  Action Engine  │     │ User Interface │
+│  & FAQ Store  │◀───▶│ (Response Flow) │────▶│  (Approvals)   │
+└───────────────┘     └─────────────────┘     └────────────────┘
 ```
 
-**Request Body:**
-```json
-{
-  "repository": {
-    "full_name": "owner/repo1"
-  },
-  "issue": {
-    "number": 123,
-    "body": "How do I set up the development environment for this project?"
-  },
-  "sender": {
-    "login": "test-user"
-  }
-}
+## Technical Stack
+
+- **Backend**: Node.js with Express
+- **AI Model**: Google Gemini 2.0
+- **Data Storage**: JSON-based FAQ repository (expandable to databases)
+- **Platforms**: GitHub API, Rocket.Chat API
+- **Logging**: Winston for comprehensive activity tracking
+- **Security**: Webhook signature verification, environment-based configuration
+
+## Demo Workflow
+
+### 1. Question Submission
+A user posts a question on GitHub or Rocket.Chat that matches an existing FAQ.
+
+### 2. Question Processing
+```mermaid
+flowchart TD
+    A[New Question] --> B{Match FAQ?}
+    B -->|Yes| C[Generate Personalized Answer]
+    B -->|No| D[No Action]
+    C --> E{Action Type?}
+    E -->|Direct| F[Post Answer]
+    E -->|Approval| G[Send to Maintainers]
+    E -->|Notify| H[Notification Only]
+    G --> I{Approved?}
+    I -->|Yes| F
+    I -->|No| J[No Action]
+    I -->|Edit| K[Modified Answer]
+    K --> F
 ```
 
-**Response:**
-```json
-{
-  "status": "success",
-  "message": "Test webhook processed successfully",
-  "details": {
-    "source": "github",
-    "question": "How do I set up the development environment for this project?",
-    "context": {
-      "source": "github",
-      "repo": "owner/repo1",
-      "issueNumber": 123,
-      "questionerId": "test-user"
-    }
-  }
-}
+### 3. Maintainer Approval Interface
+Maintainers receive approval requests with options to:
+- Approve and post as-is
+- Reject the answer
+- Edit and then approve
+- Each action is logged for transparency
+
+## Sample Results
+
+### Example 1: Development Environment Setup
+**Question**: "How do I set up the development environment for this project?"
+
+**Matched FAQ**: "How do I set up the development environment?"
+
+**Generated Response**:
+```
+Hi @user! To set up the development environment:
+
+1. Clone the repo: `git clone https://github.com/org/repo.git`
+2. Install dependencies: `npm install`
+3. Copy `.env.example` to `.env` and configure your variables
+4. Run the dev server: `npm run dev`
+
+If you run into any issues, check the troubleshooting section in README.md or let me know!
 ```
 
-### Test a Rocket.Chat Question (Stimulates Rocket Chat)
+### Example 2: Pull Request Workflow
+**Question**: "I want to contribute. How to submit changes?"
 
-```
-URL - https://faq-detect.onrender.com/test/webhook/rocketchat
-Content-Type: application/json
-```
+**Matched FAQ**: "How do I submit a pull request?"
 
-**Request Body:**
-```json
-{
-  "text": "How do I submit a pull request?",
-  "channel_name": "contributors",
-  "user_name": "test-user"
-}
+**Generated Response**:
 ```
+Thanks for wanting to contribute @user! Here's how to submit your changes:
 
-**Response:**
-```json
-{
-  "status": "success",
-  "message": "Test webhook processed successfully",
-  "details": {
-    "source": "rocketchat",
-    "question": "How do I submit a pull request?",
-    "context": {
-      "source": "rocketchat",
-      "channel": "contributors",
-      "questionerId": "test-user"
-    }
-  }
-}
+1. Fork the repo using the 'Fork' button
+2. Clone your fork locally
+3. Create a branch: `git checkout -b feature/your-feature`
+4. Make changes and commit them
+5. Push to your fork
+6. Create a PR from our main repo
+7. Fill out the PR template
+
+Make sure your code follows our style guidelines and passes tests!
 ```
 
-### Test the Approval Workflow 
+## Benefits & Impact
 
-```
-URL: https://faq-detect.onrender.com/test/approval
-Content-Type: application/json
-```
+- **Faster Response Times**: Questions answered in seconds/minutes instead of hours/days
+- **Reduced Maintainer Workload**: Common questions handled automatically
+- **Consistent Information**: Ensures accurate and up-to-date information
+- **Better Community Experience**: New contributors get help quickly
+- **Data-Driven Improvements**: Identify common questions to improve documentation
 
-**Request Body:**
-```json
-{
-  "answerId": "answer-1234",
-  "approved": true,
-  "userId": "maintainer1",
-  "modifiedAnswer": "Optional modified answer if edited by maintainer"
-}
-```
+## Future Enhancements
 
-**Response:**
-```json
-{
-  "status": "success",
-  "message": "Answer approved successfully",
-  "details": {
-    "answerId": "answer-1234",
-    "approved": true,
-    "userId": "maintainer1",
-    "timestamp": "2025-03-22T15:30:45.123Z"
-  }
-}
-```
-
-## Configuration
-
-The system's behavior is controlled by the `settings.json` file which determines:
-
-1. **Action Type**: How the system responds to matched questions
-   - `DIRECT_ANSWER`: Automatically post answers
-   - `DM_WITH_APPROVAL`: Send to maintainers for approval before posting
-   - `NOTIFY_ONLY`: Only notify maintainers about matches
-
-2. **Matching Threshold**: Confidence level required for a question to match an FAQ (0-1)
-
-3. **Notify Users**: List of maintainers who receive notifications/approvals
-
-## Testing with cURL
-
-Test GitHub question matching:
-```bash
-curl -X POST https://faq-detect.onrender.com/test/webhook/github \
-  -H "Content-Type: application/json" \
-  -d '{"repository":{"full_name":"owner/repo1"},"issue":{"number":123,"body":"How do I set up the development environment for this project?"},"sender":{"login":"test-user"}}'
-```
-
-Test Rocket.Chat question matching:
-```bash
-curl -X POST https://faq-detect.onrender.com/test/webhook/rocketchat \
-  -H "Content-Type: application/json" \
-  -d '{"text":"How do I submit a pull request?","channel_name":"contributors","user_name":"test-user"}'
-```
-
-Test approval process:
-```bash
-curl -X POST https://faq-detect.onrender.com/test/approval \
-  -H "Content-Type: application/json" \
-  -d '{"answerId":"answer-1234","approved":true,"userId":"maintainer1"}'
-```
-
-## Logs
-
-The system logs all actions, which can be viewed in the console during testing. Look for:
-
-1. Question processing
-2. FAQ matching results
-3. Answer generation
-4. Approval requests
-5. Final actions taken
-
-These logs provide visibility into the system's decision-making process during demos.
+- Database integration for scalable FAQ storage
+- Machine learning to improve matching over time
+- User feedback collection on answer quality
+- Automated FAQ suggestions based on recurring questions
